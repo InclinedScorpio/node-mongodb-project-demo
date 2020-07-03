@@ -2,6 +2,7 @@ const Router = require("express").Router;
 const mongodb = require("mongodb");
 
 const Decimal128 = mongodb.Decimal128;
+const ObjectId = mongodb.ObjectId;
 
 const db = require("../db");
 
@@ -90,8 +91,16 @@ router.get("/", (req, res, next) => {
 
 // Get single product
 router.get("/:id", (req, res, next) => {
-	const product = products.find(p => p._id === req.params.id);
-	res.json(product);
+	// const product = products.find(p => p._id === req.params.id);
+	db.getDb()
+		.db()
+		.collection("products")
+		.findOne({ _id: new ObjectId(req.params.id) })
+		.then(prodDoc => {
+			prodDoc.price = prodDoc.price.toString();
+			console.log("===================================", prodDoc);
+			res.json(prodDoc);
+		});
 });
 
 // Add new product
@@ -122,6 +131,7 @@ router.patch("/:id", (req, res, next) => {
 		price: parseFloat(req.body.price), // store this as 128bit decimal in MongoDB
 		image: req.body.image
 	};
+
 	console.log(updatedProduct);
 	res.status(200).json({ message: "Product updated", productId: "DUMMY" });
 });
